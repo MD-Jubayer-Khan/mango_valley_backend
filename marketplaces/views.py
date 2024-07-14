@@ -1,0 +1,69 @@
+from rest_framework import viewsets, status
+from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
+from rest_framework.response import Response
+from django.core.mail import send_mail
+from .models import Mango, Order
+from .serializers import MangoSerializer, OrderSerializer
+
+class MangoViewSet(viewsets.ModelViewSet):
+    queryset = Mango.objects.all()
+    serializer_class = MangoSerializer
+
+    def list_by_category(self, request):
+        category = request.query_params.get('category')
+        if category:
+            categoryLower = category.lower()
+            queryset = self.get_queryset().filter(category__lower=categoryLower)
+            serializer = self.get_serializer(queryset, many=True)
+            return Response(serializer.data)
+        else:
+            return Response({"error": "Please provide a category parameter"}, status=status.HTTP_400_BAD_REQUEST)
+
+class OrderViewSet(viewsets.ModelViewSet):
+    queryset = Order.objects.all()
+    serializer_class = OrderSerializer
+    permission_classes = [IsAuthenticated]
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            order = serializer.save(user=request.user)
+            mango = order.mango
+            mango.quantity -= 1
+            mango.save()
+            # send_mail(
+            #     'Order Confirmation',
+            #     f'Thank you for your order of {mango.title}.',
+            #     'from@example.com',
+            #     [request.user.email],
+            #     fail_silently=False,
+            # )
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def get_queryset(self):
+        queryset = Order.objects.all()
+        user_id = self.request.query_params.get('user_id')
+        if user_id:
+            queryset = queryset.filter(user_id=user_id)
+        return queryset
+
+    @action(detail=True, methods=['patch'], permission_classes=[IsAdminUser])
+    def update_status(self, request, pk=None):
+        order = self.get_object()
+        new_status = request.data.get('status').upper()
+        if new_status not in ['PENDING', 'COMPLETED']:
+            return Response({'error': 'Invalid status'}, status=status.HTTP_400_BAD_REQUEST)
+        order.status = new_status
+        order.save()
+        # if new_status == 'COMPLETED':
+        #     send_mail(
+        #         'Order Completed',
+        #         f'Dear {order.user.username}, your order #{order.id} for {order.mango.title} has been marked as completed.',
+        #         'from@example.com',
+        #         [order.user.email],
+        #         fail_silently=False,
+        #     )
+        serializer = self.get_serializer(order)
+        return Response(serializer.data)

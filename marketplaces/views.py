@@ -2,9 +2,9 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
-from django.core.mail import send_mail
 from .models import Mango, Order
 from .serializers import MangoSerializer, OrderSerializer
+from mangoValley.constraints import send_email
 
 class MangoViewSet(viewsets.ModelViewSet):
     queryset = Mango.objects.all()
@@ -32,13 +32,7 @@ class OrderViewSet(viewsets.ModelViewSet):
             mango = order.mango
             mango.quantity -= 1
             mango.save()
-            # send_mail(
-            #     'Order Confirmation',
-            #     f'Thank you for your order of {mango.title}.',
-            #     'from@example.com',
-            #     [request.user.email],
-            #     fail_silently=False,
-            # )
+            send_email(request.user, "Order message", "createOrder.html", {"mango":mango}) 
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -57,13 +51,7 @@ class OrderViewSet(viewsets.ModelViewSet):
             return Response({'error': 'Invalid status'}, status=status.HTTP_400_BAD_REQUEST)
         order.status = new_status
         order.save()
-        # if new_status == 'COMPLETED':
-        #     send_mail(
-        #         'Order Completed',
-        #         f'Dear {order.user.username}, your order #{order.id} for {order.mango.title} has been marked as completed.',
-        #         'from@example.com',
-        #         [order.user.email],
-        #         fail_silently=False,
-        #     )
+        if new_status == 'COMPLETED':
+            send_email(order.user, "Order Status message", "orderStatus.html", {"order": order})
         serializer = self.get_serializer(order)
         return Response(serializer.data)

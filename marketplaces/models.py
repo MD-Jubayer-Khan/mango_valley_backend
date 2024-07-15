@@ -1,5 +1,5 @@
 from django.db import models
-from django.contrib.auth.models import User
+from django.conf import settings
 from mangoValley.constraints import CATEGORY_CHOICES, STATUS_CHOICES
 class Mango(models.Model):
     title = models.CharField(max_length=255)
@@ -13,7 +13,7 @@ class Mango(models.Model):
         return self.title
 
 class Order(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     mango = models.ForeignKey(Mango, on_delete=models.CASCADE)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDING')
     order_date = models.DateTimeField(auto_now_add=True)

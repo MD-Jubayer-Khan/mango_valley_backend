@@ -1,6 +1,7 @@
 from dj_rest_auth.registration.serializers import RegisterSerializer
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
+from .models import CustomUser
 
 User = get_user_model()
 
@@ -21,3 +22,8 @@ class CustomRegisterSerializer(RegisterSerializer):
         user.user_type = self.cleaned_data.get('user_type')
         user.save()
         return user
+
+class CustomUserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomUser
+        fields = ('id','user_type', 'username')

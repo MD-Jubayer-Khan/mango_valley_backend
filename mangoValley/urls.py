@@ -25,5 +25,6 @@ urlpatterns = [
     path("api/auth/registration/account-confirm-email/<str:key>/" , confirm_email, name="confirm_email"),
     path("api/auth/registration/",include("dj_rest_auth.registration.urls")),
     path("api/auth/", include("django.contrib.auth.urls")),
+    path('api/accounts/', include('accounts.urls')),
     path('api/marketplaces/', include('marketplaces.urls')),
 ]

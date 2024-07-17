@@ -34,6 +34,7 @@ diagram
 diff-match-patch
 dill
 distlib
+dj_rest_auth
 dj-database-url
 Django
 django-bootstrap-v5

@@ -5,10 +5,12 @@ from rest_framework.response import Response
 from .models import Mango, Order
 from .serializers import MangoSerializer, OrderSerializer
 from mangoValley.constraints import send_email
+from rest_framework.permissions import AllowAny
 
 class MangoViewSet(viewsets.ModelViewSet):
     queryset = Mango.objects.all()
     serializer_class = MangoSerializer
+    permission_classes = [AllowAny]
 
     def list_by_category(self, request):
         category = request.query_params.get('category')
@@ -43,7 +45,6 @@ class OrderViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(user_id=user_id)
         return queryset
 
-    @action(detail=True, methods=['patch'], permission_classes=[IsAdminUser])
     def update_status(self, request, pk=None):
         order = self.get_object()
         new_status = request.data.get('status').upper()

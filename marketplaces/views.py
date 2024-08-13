@@ -44,7 +44,8 @@ class OrderViewSet(viewsets.ModelViewSet):
         if user_id:
             queryset = queryset.filter(user_id=user_id)
         return queryset
-
+    
+    @action(detail=True, methods=['post'], url_path='update-status')
     def update_status(self, request, pk=None):
         order = self.get_object()
         new_status = request.data.get('status').upper()
